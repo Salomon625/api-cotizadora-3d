@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Cotizaciones 3D</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #d8dee9;
+      --text: #172033;
+      --muted: #667085;
+      --brand: #0f766e;
+      --brand-dark: #115e59;
+      --danger: #b42318;
+      --ok: #067647;
+      --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      background: #101828;
+      color: white;
+      padding: 22px 28px;
+    }
+
+    header h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.65fr);
+      gap: 18px;
+      padding: 18px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .content {
+      padding: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr;
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 40px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: var(--text);
+      padding: 0 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+      margin-top: 24px;
+      color: #344054;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .check-row input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--panel-soft);
+      color: #475467;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    td {
+      background: white;
+    }
+
+    .col-material {
+      width: 28%;
+    }
+
+    .col-color {
+      width: 28%;
+    }
+
+    .col-weight {
+      width: 18%;
+    }
+
+    .col-action {
+      width: 56px;
+      text-align: center;
+    }
+
+    button {
+      height: 40px;
+      border: 0;
+      background: var(--brand);
+      color: white;
+      padding: 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--brand-dark);
+    }
+
+    button.secondary {
+      background: #475467;
+    }
+
+    button.danger {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      background: #fee4e2;
+      color: var(--danger);
+      font-size: 18px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      padding: 14px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .metric.total {
+      background: #ecfdf3;
+      border-color: #abefc6;
+    }
+
+    .metric.total span {
+      color: var(--ok);
+      font-size: 30px;
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 12px;
+      background: #fffaeb;
+      border: 1px solid #fedf89;
+      color: #93370d;
+      font-size: 14px;
+    }
+
+    .message.ok {
+      background: #ecfdf3;
+      border-color: #abefc6;
+      color: var(--ok);
+    }
+
+    details {
+      margin-top: 14px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: #344054;
+      font-weight: 700;
+    }
+
+    pre {
+      max-height: 360px;
+      overflow: auto;
+      margin: 10px 0 0;
+      padding: 12px;
+      background: #101828;
+      color: #e5e7eb;
+      font-size: 12px;
+    }
+
+    @media (max-width: 920px) {
+      main,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Simulador de Cotizaciones 3D</h1>
+    <p>Calcula precios por material, peso, cantidad, desperdicio, mano de obra y envio.</p>
+  </header>
+
+  <main>
+    <section>
+      <div class="section-head">
+        <h2>Datos de la cotizacion</h2>
+      </div>
+      <div class="content">
+        <div class="grid">
+          <div>
+            <label for="nombre_producto">Nombre del producto</label>
+            <input id="nombre_producto" type="text" value="Mini mesa">
+          </div>
+          <div>
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" type="number" min="1" step="1" value="1">
+          </div>
+        </div>
+
+        <label class="check-row" for="incluir_envio">
+          <input id="incluir_envio" type="checkbox" checked>
+          Incluir envio
+        </label>
+      </div>
+
+      <div class="section-head">
+        <h2>Materiales</h2>
+        <button id="agregar" type="button">Agregar material</button>
+      </div>
+
+      <div class="content">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-material">Material</th>
+              <th class="col-color">Color</th>
+              <th class="col-weight">Peso gramos</th>
+              <th class="col-action"></th>
+            </tr>
+          </thead>
+          <tbody id="materiales"></tbody>
+        </table>
+
+        <div class="actions">
+          <button id="btn_cotizar" type="button">Cotizar</button>
+          <button id="limpiar" class="secondary" type="button">Limpiar</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Resultado</h2>
+      </div>
+      <div class="content">
+        <div class="summary">
+          <div class="metric total">
+            <strong>Total con envio</strong>
+            <span id="total">$0</span>
+          </div>
+          <div class="metric">
+            <strong>Envio</strong>
+            <span id="envio">$0</span>
+          </div>
+          <div class="metric">
+            <strong>Precio unitario</strong>
+            <span id="unitario">$0</span>
+          </div>
+          <div class="metric">
+            <strong>Subtotal</strong>
+            <span id="subtotal">$0</span>
+          </div>
+        </div>
+
+        <div id="mensaje" class="message">Ingresa los datos y presiona Cotizar.</div>
+
+        <details>
+          <summary>Ver detalle tecnico</summary>
+          <pre id="detalle">Aun no hay cotizacion.</pre>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let materialesConfig = {};
+
+    const materialesFallback = {
+      pla: {nombre: "PLA+", colores: ["amarillo", "azul rey", "blanco", "gris", "negro", "rojo", "verde pino"]},
+      pla_ecologico: {nombre: "PLA Ecologico", colores: ["color aleatorio ecologico"]},
+      pla_carbono: {nombre: "PLA Carbono 4%", colores: ["negro con carbono 4%"]},
+      pla_marmol: {nombre: "PLA Marmol", colores: ["marmol"]},
+      pla_seda: {nombre: "PLA Seda", colores: ["azul silk", "bronce silk", "dorado silk", "rojo silk", "plateado"]},
+      pla_traslucido: {nombre: "PLA Traslucido", colores: ["azul rey traslucido", "amarillo traslucido", "morado traslucido", "natural traslucido", "rojo traslucido", "verde petroleo traslucido"]},
+      pla_glitter: {nombre: "PLA Glitter", colores: ["azul glitter", "verde glitter", "rojo glitter"]},
+      petg: {nombre: "PETG", colores: ["amarillo", "azul rey", "blanco", "gris", "naranja", "negro", "rojo", "transparente", "verde pino"]},
+      abs: {nombre: "ABS", colores: ["amarillo", "azul rey", "blanco hueso", "gris", "negro", "rojo", "verde pino"]},
+      tpu: {nombre: "TPU Flexible", colores: ["amarillo traslucido", "azul rey", "blanco", "gris", "negro", "naranja traslucido", "rojo", "verde traslucido"]},
+      pp: {nombre: "PP", colores: ["azul", "blanco", "gris", "natural", "negro", "rojo"]},
+      asa: {nombre: "ASA", colores: ["negro", "blanco", "gris", "natural"]},
+      nylon: {nombre: "Nylon", colores: ["natural", "negro", "blanco"]},
+      pc: {nombre: "PC Policarbonato", colores: ["transparente", "negro", "blanco"]}
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+
+    function apiUrl(ruta) {
+      return `http://127.0.0.1:8000${ruta}`;
+    }
+
+    function dinero(valor) {
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        maximumFractionDigits: 0
+      }).format(Number(valor || 0));
+    }
+
+    function codigosMateriales() {
+      const desdeConfig = Object.keys(materialesConfig);
+      return desdeConfig.length ? desdeConfig : Object.keys(materialesFallback);
+    }
+
+    function coloresMaterial(material) {
+      return materialesConfig[material]?.colores || materialesFallback[material]?.colores || ["sin definir"];
+    }
+
+    function opcionesMateriales(valorActual = "pla") {
+      return codigosMateriales().map((codigo) => {
+        const nombre = materialesConfig[codigo]?.nombre || materialesFallback[codigo]?.nombre || codigo;
+        const selected = codigo === valorActual ? "selected" : "";
+        return `<option value="${codigo}" ${selected}>${nombre}</option>`;
+      }).join("");
+    }
+
+    function opcionesColores(material, valorActual = "") {
+      return coloresMaterial(material).map((color) => {
+        const selected = color === valorActual ? "selected" : "";
+        return `<option value="${color}" ${selected}>${color}</option>`;
+      }).join("");
+    }
+
+    function agregarMaterial(material = "pla", color = "", peso = 150) {
+      const tbody = $("#materiales");
+      const fila = document.createElement("tr");
+      const colorInicial = color || coloresMaterial(material)[0] || "";
+
+      fila.innerHTML = `
+        <td>
+          <select class="material">${opcionesMateriales(material)}</select>
+        </td>
+        <td>
+          <select class="color">${opcionesColores(material, colorInicial)}</select>
+        </td>
+        <td>
+          <input class="peso" type="number" min="0.1" step="0.1" value="${peso}">
+        </td>
+        <td class="col-action">
+          <button class="danger eliminar" type="button" title="Eliminar material">x</button>
+        </td>
+      `;
+
+      fila.querySelector(".material").addEventListener("change", (evento) => {
+        const nuevoMaterial = evento.target.value;
+        fila.querySelector(".color").innerHTML = opcionesColores(nuevoMaterial);
+      });
+
+      fila.querySelector(".eliminar").addEventListener("click", () => {
+        fila.remove();
+        if (!document.querySelector("#materiales tr")) {
+          agregarMaterial();
+        }
+      });
+
+      tbody.appendChild(fila);
+    }
+
+    function obtenerMateriales() {
+      return Array.from(document.querySelectorAll("#materiales tr")).map((fila) => ({
+        material: fila.querySelector(".material").value,
+        color: fila.querySelector(".color").value,
+        peso_gramos: Number(fila.querySelector(".peso").value)
+      }));
+    }
+
+    function validar(datos) {
+      if (!datos.nombre_producto.trim()) {
+        return "Escribe el nombre del producto.";
+      }
+
+      if (!Number.isFinite(datos.cantidad) || datos.cantidad < 1) {
+        return "La cantidad debe ser 1 o mayor.";
+      }
+
+      if (!datos.materiales.length) {
+        return "Agrega al menos un material.";
+      }
+
+      const materialInvalido = datos.materiales.find((item) => (
+        !item.material || !Number.isFinite(item.peso_gramos) || item.peso_gramos <= 0
+      ));
+
+      if (materialInvalido) {
+        return "Todos los materiales deben tener un peso mayor que cero.";
+      }
+
+      return "";
+    }
+
+    function mostrarError(texto, detalle = null) {
+      $("#mensaje").className = "message";
+      $("#mensaje").textContent = texto;
+      $("#detalle").textContent = detalle ? JSON.stringify(detalle, null, 2) : "Sin detalle tecnico.";
+    }
+
+    function mostrarResultado(resultado) {
+      $("#total").textContent = dinero(resultado.resumen.precio_total_con_envio);
+      $("#envio").textContent = dinero(resultado.resumen.envio);
+      $("#unitario").textContent = dinero(resultado.resumen.precio_unitario);
+      $("#subtotal").textContent = dinero(resultado.resumen.subtotal_sin_envio);
+
+      $("#mensaje").className = "message ok";
+      $("#mensaje").textContent =
+        `Cotizacion lista: ${dinero(resultado.resumen.precio_total_con_envio)} con envio incluido.`;
+
+      $("#detalle").textContent = JSON.stringify(resultado, null, 2);
+    }
+
+    async function realizarCotizacion() {
+      const datos = {
+        nombre_producto: $("#nombre_producto").value,
+        cantidad: Number($("#cantidad").value),
+        incluir_envio: $("#incluir_envio").checked,
+        materiales: obtenerMateriales()
+      };
+
+      const error = validar(datos);
+      if (error) {
+        mostrarError(error);
+        return;
+      }
+
+      $("#btn_cotizar").disabled = true;
+      $("#btn_cotizar").textContent = "Cotizando...";
+
+      try {
+        const respuesta = await fetch(apiUrl("/api/cotizar"), {
+          method: "POST",
+          headers: {"Content-Type": "text/plain;charset=UTF-8"},
+          body: JSON.stringify(datos)
+        });
+
+        const textoRespuesta = await respuesta.text();
+        let resultado = {};
+
+        try {
+          resultado = JSON.parse(textoRespuesta);
+        } catch (errorJson) {
+          const textoCorto = textoRespuesta.slice(0, 500);
+          const pareceHtml = textoRespuesta.trim().startsWith("<");
+          const mensaje = pareceHtml
+            ? "La pagina recibio HTML en vez de JSON. Abre el simulador desde http://127.0.0.1:8000/simulador y recarga con Ctrl + F5."
+            : "La API respondio, pero la respuesta no vino en formato JSON.";
+
+          mostrarError(mensaje, {
+            estado_http: respuesta.status,
+            tipo_contenido: respuesta.headers.get("content-type"),
+            respuesta_recibida: textoCorto
+          });
+          return;
+        }
+
+        if (!respuesta.ok || resultado.error) {
+          mostrarError(resultado.error || `No se pudo calcular la cotizacion. Estado ${respuesta.status}.`, resultado);
+          return;
+        }
+
+        mostrarResultado(resultado);
+      } catch (errorFetch) {
+        mostrarError(
+          "No se pudo conectar con la API. Abre esta pagina desde http://127.0.0.1:8000/simulador y confirma que el servidor siga encendido.",
+          {error: String(errorFetch)}
+        );
+      } finally {
+        $("#btn_cotizar").disabled = false;
+        $("#btn_cotizar").textContent = "Cotizar";
+      }
+    }
+
+    function limpiar() {
+      $("#nombre_producto").value = "Mini mesa";
+      $("#cantidad").value = "1";
+      $("#incluir_envio").checked = true;
+      $("#materiales").innerHTML = "";
+      agregarMaterial();
+      $("#total").textContent = "$0";
+      $("#envio").textContent = "$0";
+      $("#unitario").textContent = "$0";
+      $("#subtotal").textContent = "$0";
+      $("#mensaje").className = "message";
+      $("#mensaje").textContent = "Ingresa los datos y presiona Cotizar.";
+      $("#detalle").textContent = "Aun no hay cotizacion.";
+    }
+
+    async function cargarConfig() {
+      materialesConfig = materialesFallback;
+
+      try {
+        const respuesta = await fetch(apiUrl("/api/config"), {
+          headers: {"Accept": "application/json"}
+        });
+        if (!respuesta.ok) {
+          return;
+        }
+
+        const config = await respuesta.json();
+        materialesConfig = Object.keys(config.materiales || {}).length
+          ? config.materiales
+          : materialesFallback;
+      } catch (error) {
+        materialesConfig = materialesFallback;
+      }
+    }
+
+    async function iniciar() {
+      await cargarConfig();
+      agregarMaterial("tpu", "gris", 400);
+      agregarMaterial("pla_carbono", "negro con carbono 4%", 150);
+
+      $("#agregar").addEventListener("click", () => agregarMaterial());
+      $("#btn_cotizar").addEventListener("click", realizarCotizacion);
+      $("#limpiar").addEventListener("click", limpiar);
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>
