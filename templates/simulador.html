@@ -394,6 +394,10 @@
     const $ = (selector) => document.querySelector(selector);
 
     function apiUrl(ruta) {
+      if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+        return `${window.location.origin}${ruta}`;
+      }
+
       return `http://127.0.0.1:8000${ruta}`;
     }
 
