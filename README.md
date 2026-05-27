@@ -13,6 +13,5 @@ python -m uvicorn app.main:app --reload
 
 - `/` estado general
 - `/docs` documentacion automatica
-- `/simulador` simulador web
 - `/admin` panel de configuracion
 - `/api/cotizar` endpoint de cotizacion

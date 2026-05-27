@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,9 @@ from pydantic import ValidationError
 from app.calculadora import calcular_cotizacion
 from app.config_store import cargar_config, guardar_config
 from app.models import CotizacionRequest
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 app = FastAPI(
     title="API Cotizadora de Impresiones 3D",
@@ -24,7 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @app.get("/")
@@ -33,7 +37,6 @@ def inicio():
         "mensaje": "API Cotizadora de Impresiones 3D funcionando",
         "docs": "/docs",
         "admin": "/admin",
-        "simulador": "/simulador",
     }
 
 
@@ -127,10 +130,3 @@ async def actualizar_config(request: Request):
 def admin(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request})
 
-
-@app.get("/simulador")
-def simulador(request: Request):
-    response = templates.TemplateResponse("simulador.html", {"request": request})
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    return response
