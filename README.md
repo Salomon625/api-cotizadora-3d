@@ -13,5 +13,7 @@ python -m uvicorn app.main:app --reload
 
 - `/` estado general
 - `/docs` documentacion automatica
-- `/admin` panel de configuracion
+- `/api/status` estado para la app movil
+- `/api/config` configuracion completa
+- `/api/materiales` materiales disponibles
 - `/api/cotizar` endpoint de cotizacion

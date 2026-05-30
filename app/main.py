@@ -1,23 +1,18 @@
 import json
-from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 
 from app.calculadora import calcular_cotizacion
 from app.config_store import cargar_config, guardar_config
 from app.models import CotizacionRequest
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-TEMPLATES_DIR = BASE_DIR / "templates"
-
 app = FastAPI(
     title="API Cotizadora de Impresiones 3D",
-    version="2.0.0",
-    description="API para cotizar impresiones 3D con materiales, desperdicio, luz, repuesto, mano de obra y envio.",
+    version="3.0.0",
+    description="Backend JSON para cotizar impresiones 3D desde apps moviles o clientes externos.",
 )
 
 app.add_middleware(
@@ -28,21 +23,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
 
 @app.get("/")
 def inicio():
     return {
         "mensaje": "API Cotizadora de Impresiones 3D funcionando",
+        "version": "3.0.0",
         "docs": "/docs",
-        "admin": "/admin",
+        "estado": "/api/status",
+        "cotizar": "/api/cotizar",
+        "configuracion": "/api/config",
+        "materiales": "/api/materiales",
     }
+
+
+@app.head("/")
+def inicio_head():
+    return Response(status_code=200)
 
 
 @app.get("/salud")
 def salud():
     return {"estado": "ok"}
+
+
+@app.get("/api/status")
+def status():
+    config = cargar_config()
+    return {
+        "estado": "ok",
+        "version": "3.0.0",
+        "materiales_disponibles": len(config["materiales"]),
+    }
+
+
+@app.get("/api/materiales")
+def obtener_materiales():
+    return cargar_config()["materiales"]
+
+
+@app.get("/api/config")
+def obtener_config():
+    return cargar_config()
+
+
+@app.put("/api/config")
+async def actualizar_config(request: Request):
+    config = await request.json()
+    guardar_config(config)
+    return {"mensaje": "Configuracion guardada", "config": config}
 
 
 async def leer_cotizacion_request(request: Request):
@@ -73,22 +102,6 @@ async def leer_cotizacion_request(request: Request):
         )
 
 
-@app.post("/api/cotizar")
-async def cotizar(request: Request):
-    datos = await leer_cotizacion_request(request)
-
-    if datos is None:
-        return JSONResponse(
-            status_code=400,
-            content={"error": "No se recibio una cotizacion valida en JSON"},
-        )
-
-    if isinstance(datos, JSONResponse):
-        return datos
-
-    return calcular_cotizacion(datos)
-
-
 @app.get("/api/cotizar")
 def ayuda_cotizar():
     return {
@@ -114,19 +127,17 @@ def opciones_cotizar():
     return {"estado": "ok"}
 
 
-@app.get("/api/config")
-def obtener_config():
-    return cargar_config()
+@app.post("/api/cotizar")
+async def cotizar(request: Request):
+    datos = await leer_cotizacion_request(request)
 
+    if datos is None:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No se recibio una cotizacion valida en JSON"},
+        )
 
-@app.put("/api/config")
-async def actualizar_config(request: Request):
-    config = await request.json()
-    guardar_config(config)
-    return {"mensaje": "Configuracion guardada", "config": config}
+    if isinstance(datos, JSONResponse):
+        return datos
 
-
-@app.get("/admin")
-def admin(request: Request):
-    return templates.TemplateResponse("admin.html", {"request": request})
-
+    return calcular_cotizacion(datos)
